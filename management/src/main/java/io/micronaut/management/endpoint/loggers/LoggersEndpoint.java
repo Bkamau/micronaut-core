@@ -43,4 +43,10 @@ public class LoggersEndpoint {
      */
     public static final boolean DEFAULT_SENSITIVE = false;
 
+    /**
+     *
+     */
+    public LoggersEndpoint() {
+
+    }
 }

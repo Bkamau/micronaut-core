@@ -15,6 +15,7 @@
  */
 package io.micronaut.management.endpoint.loggers
 
+import io.micronaut.context.ApplicationContext
 import spock.lang.Specification
 
 /**
@@ -22,5 +23,27 @@ import spock.lang.Specification
  * @since 1.0
  */
 class LoggersEndpointSpec extends Specification {
+
+    void "test that the endpoint is not available when loggers disabled"() {
+        given:
+        ApplicationContext context = ApplicationContext.run(['endpoints.loggers.enabled': false])
+
+        expect:
+        !context.containsBean(LoggersEndpoint)
+
+        cleanup:
+        context.close()
+    }
+
+    void "test that the endpoint is available when loggers enabled"() {
+        given:
+        ApplicationContext context = ApplicationContext.run(['endpoints.loggers.enabled': true])
+
+        expect:
+        context.containsBean(LoggersEndpoint)
+
+        cleanup:
+        context.close()
+    }
 
 }
