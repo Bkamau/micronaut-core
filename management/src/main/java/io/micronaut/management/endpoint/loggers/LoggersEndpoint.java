@@ -17,6 +17,7 @@
 package io.micronaut.management.endpoint.loggers;
 
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.management.endpoint.Endpoint;
 import io.micronaut.management.endpoint.EndpointConfiguration;
@@ -66,12 +67,12 @@ public class LoggersEndpoint {
     // TODO Implement: @Read public LoggerLevels loggerLevels(@Selector String name)
     @Read
     public HttpResponse loggerLevels(@QueryValue String name) {
-        return HttpResponse.serverError();  // TODO Replace placeholder.
+        return HttpResponse.status(HttpStatus.NOT_IMPLEMENTED);  // TODO Implement.
     }
 
     // TODO Implement: @Write public void configureLogLevel(@Selector String name, LogLevel configuredLevel)
     @Write
     public HttpResponse configureLogLevel(@QueryValue String name, String configuredLevel) {
-        return HttpResponse.serverError();  // TODO Replace placeholder.
+        return HttpResponse.status(HttpStatus.NOT_IMPLEMENTED);  // TODO Implement.
     }
 }
