@@ -18,6 +18,8 @@ package io.micronaut.management.endpoint.loggers;
 
 import io.micronaut.management.endpoint.Endpoint;
 import io.micronaut.management.endpoint.EndpointConfiguration;
+import io.micronaut.management.endpoint.Read;
+import io.reactivex.Single;
 
 /**
  * <p>Exposes an {@link Endpoint} to manage loggers.</p>
@@ -43,10 +45,17 @@ public class LoggersEndpoint {
      */
     public static final boolean DEFAULT_SENSITIVE = false;
 
-    /**
-     *
-     */
-    public LoggersEndpoint() {
+    private LoggersAggregator loggersAggregator;
 
+    /**
+     * @param loggersAggregator The {@link LoggersAggregator}
+     */
+    public LoggersEndpoint(LoggersAggregator loggersAggregator) {
+        this.loggersAggregator = loggersAggregator;
+    }
+
+    @Read
+    public Single loggers() {
+        return Single.fromPublisher(loggersAggregator.aggregate());
     }
 }

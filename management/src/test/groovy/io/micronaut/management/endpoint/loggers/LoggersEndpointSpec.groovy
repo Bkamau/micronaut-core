@@ -15,7 +15,15 @@
  */
 package io.micronaut.management.endpoint.loggers
 
+import ch.qos.logback.classic.LoggerContext
+import ch.qos.logback.classic.joran.JoranConfigurator
+import ch.qos.logback.core.util.StatusPrinter
 import io.micronaut.context.ApplicationContext
+import io.micronaut.http.HttpRequest
+import io.micronaut.http.HttpStatus
+import io.micronaut.http.client.RxHttpClient
+import io.micronaut.runtime.server.EmbeddedServer
+import org.slf4j.LoggerFactory
 import spock.lang.Specification
 
 /**
@@ -24,7 +32,14 @@ import spock.lang.Specification
  */
 class LoggersEndpointSpec extends Specification {
 
-    void "test that the endpoint is not available when loggers disabled"() {
+    static final ERROR = 'ERROR'
+    static final WARN = 'WARN'
+    static final INFO = 'INFO'
+    static final DEBUG = 'DEBUG'
+    static final TRACE = 'TRACE'
+    static final NOT_SPECIFIED = 'NOT_SPECIFIED'
+
+    void "test that the loggers endpoint is not available when disabled via config"() {
         given:
         ApplicationContext context = ApplicationContext.run(['endpoints.loggers.enabled': false])
 
@@ -35,7 +50,7 @@ class LoggersEndpointSpec extends Specification {
         context.close()
     }
 
-    void "test that the endpoint is available when loggers enabled"() {
+    void "test that the loggers endpoint is available when enabled via config"() {
         given:
         ApplicationContext context = ApplicationContext.run(['endpoints.loggers.enabled': true])
 
@@ -44,6 +59,32 @@ class LoggersEndpointSpec extends Specification {
 
         cleanup:
         context.close()
+    }
+
+    void "test that the loggers configured in logback-test.xml are returned from the endpoint"() {
+        given:
+        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
+        RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.URL)
+
+        when:
+        def response = rxClient.exchange(HttpRequest.GET("/loggers"), Map).blockingFirst()
+        def result = response.body()
+
+        then:
+        response.code() == HttpStatus.OK.code
+        result.containsKey 'loggers'
+
+        and:
+        result.loggers == [
+                ROOT: [configuredLevel: INFO, effectiveLevel: INFO],
+                foobar: [configuredLevel: ERROR, effectiveLevel: ERROR],
+                debugging: [configuredLevel: DEBUG, effectiveLevel: DEBUG],
+                'inherit-parent': [configuredLevel: NOT_SPECIFIED, effectiveLevel: INFO],
+        ]
+
+        cleanup:
+        rxClient.close()
+        embeddedServer.close()
     }
 
 }
