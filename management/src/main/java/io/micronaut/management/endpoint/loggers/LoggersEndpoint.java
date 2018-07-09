@@ -16,9 +16,12 @@
 
 package io.micronaut.management.endpoint.loggers;
 
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.management.endpoint.Endpoint;
 import io.micronaut.management.endpoint.EndpointConfiguration;
 import io.micronaut.management.endpoint.Read;
+import io.micronaut.management.endpoint.Write;
 import io.reactivex.Single;
 
 /**
@@ -54,8 +57,21 @@ public class LoggersEndpoint {
         this.loggersAggregator = loggersAggregator;
     }
 
+    // TODO Complete: @Read public Map<String, Object> loggers()
     @Read
     public Single loggers() {
         return Single.fromPublisher(loggersAggregator.aggregate());
+    }
+
+    // TODO Implement: @Read public LoggerLevels loggerLevels(@Selector String name)
+    @Read
+    public HttpResponse loggerLevels(@QueryValue String name) {
+        return HttpResponse.serverError();  // TODO Replace placeholder.
+    }
+
+    // TODO Implement: @Write public void configureLogLevel(@Selector String name, LogLevel configuredLevel)
+    @Write
+    public HttpResponse configureLogLevel(@QueryValue String name, String configuredLevel) {
+        return HttpResponse.serverError();  // TODO Replace placeholder.
     }
 }

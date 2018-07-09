@@ -67,7 +67,7 @@ class LoggersEndpointSpec extends Specification {
         def result = response.body()
 
         then:
-        response.code() == HttpStatus.OK.code
+        response.status == HttpStatus.OK
         result.containsKey 'loggers'
 
         and:
@@ -77,6 +77,38 @@ class LoggersEndpointSpec extends Specification {
                 debugging: [configuredLevel: DEBUG, effectiveLevel: DEBUG],
                 'inherit-parent': [configuredLevel: NOT_SPECIFIED, effectiveLevel: INFO],
         ]
+
+        cleanup:
+        rxClient.close()
+        embeddedServer.close()
+    }
+
+    void "test that log levels of a known logger can be retrieved via the loggers endpoint"() {
+        given:
+        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
+        RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.URL)
+
+        when:
+        def response = rxClient.exchange(HttpRequest.GET("/loggers/zzz"), Integer).blockingFirst()
+
+        then:
+        response.status == HttpStatus.OK
+
+        cleanup:
+        rxClient.close()
+        embeddedServer.close()
+    }
+
+    void "test that can configure level of a known logger via the loggers endpoint"() {
+        given:
+        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
+        RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.URL)
+
+        when:
+        def response = rxClient.exchange(HttpRequest.POST("/loggers/zzz", [configuredLevel: 'OFF']), String).blockingFirst()
+
+        then:
+        response.status == HttpStatus.NO_CONTENT
 
         cleanup:
         rxClient.close()
