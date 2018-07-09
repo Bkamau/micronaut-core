@@ -15,15 +15,11 @@
  */
 package io.micronaut.management.endpoint.loggers
 
-import ch.qos.logback.classic.LoggerContext
-import ch.qos.logback.classic.joran.JoranConfigurator
-import ch.qos.logback.core.util.StatusPrinter
 import io.micronaut.context.ApplicationContext
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
 import io.micronaut.http.client.RxHttpClient
 import io.micronaut.runtime.server.EmbeddedServer
-import org.slf4j.LoggerFactory
 import spock.lang.Specification
 
 /**
