@@ -66,17 +66,25 @@ class LoggersEndpointSpec extends Specification {
         def response = rxClient.exchange(HttpRequest.GET("/loggers"), Map).blockingFirst()
         def result = response.body()
 
-        then:
+        then: 'the request was successful'
         response.status == HttpStatus.OK
         result.containsKey 'loggers'
 
-        and:
-        result.loggers == [
-                ROOT: [configuredLevel: INFO, effectiveLevel: INFO],
-                foobar: [configuredLevel: ERROR, effectiveLevel: ERROR],
-                debugging: [configuredLevel: DEBUG, effectiveLevel: DEBUG],
-                'inherit-parent': [configuredLevel: NOT_SPECIFIED, effectiveLevel: INFO],
-        ]
+        and: 'we have some expected builtin loggers'
+        ['io.micronaut', 'io.netty'].every {
+            result.loggers.containsKey it
+        }
+
+        and: 'we have all loggers and expected levels from logback-test.xml'
+        [ROOT: [configuredLevel: INFO, effectiveLevel: INFO],
+         errors: [configuredLevel: ERROR, effectiveLevel: ERROR],
+         'no-appenders': [configuredLevel: WARN, effectiveLevel: WARN],
+         'no-level': [configuredLevel: NOT_SPECIFIED, effectiveLevel: INFO],
+         'no-config': [configuredLevel: NOT_SPECIFIED, effectiveLevel: INFO],
+        ].every { log, levels ->
+            result.loggers.containsKey log
+            result.loggers[log] == levels
+        }
 
         cleanup:
         rxClient.close()

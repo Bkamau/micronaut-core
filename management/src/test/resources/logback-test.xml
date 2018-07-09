@@ -11,15 +11,17 @@
         </encoder>
     </appender>
 
-    <logger name="foobar" level="ERROR" additivity="false">
+    <logger name="errors" level="ERROR" additivity="false">
         <appender-ref ref="JSON"/>
     </logger>
 
-    <logger name="debugging" level="DEBUG"/>
-
-    <logger name="inherit-parent">
+    <logger name="no-level">
         <appender-ref ref="STDOUT"/>
     </logger>
+
+    <logger name="no-appenders" level="WARN"/>
+
+    <logger name="no-config"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
