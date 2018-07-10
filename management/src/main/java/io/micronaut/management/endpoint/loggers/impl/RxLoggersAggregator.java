@@ -41,7 +41,6 @@ public class RxLoggersAggregator implements LoggersAggregator {
 
         // TODO Reimplement async.
         loggerContext.getLoggerList()
-                .stream()
                 .forEach((log) -> {
                     Map<String, String> levels = new HashMap<>();
 
