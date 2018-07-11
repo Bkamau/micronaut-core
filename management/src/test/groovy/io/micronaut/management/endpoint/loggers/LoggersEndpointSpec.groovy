@@ -91,13 +91,31 @@ class LoggersEndpointSpec extends Specification {
         embeddedServer.close()
     }
 
-    void "test that log levels of a known logger can be retrieved via the loggers endpoint"() {
+    void "test that a request for log levels of a non-existent log returns NOT_FOUND"() {
         given:
+        def url = '/loggers/.xyz.abc.'     // log '.xyz.abc.' does not exist
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
         RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.URL)
 
         when:
-        def response = rxClient.exchange(HttpRequest.GET("/loggers/zzz"), Integer).blockingFirst()
+        def response = rxClient.exchange(HttpRequest.GET(url), Integer).blockingFirst()
+
+        then:
+        response.status == HttpStatus.NOT_FOUND
+
+        cleanup:
+        rxClient.close()
+        embeddedServer.close()
+    }
+
+    void "test that log levels of an existing log can be retrieved via the loggers endpoint"() {
+        given:
+        def url = '/loggers/errors'     // log 'errors' exists in logback-test.xml
+        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
+        RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.URL)
+
+        when:
+        def response = rxClient.exchange(HttpRequest.GET(url), Integer).blockingFirst()
 
         then:
         response.status == HttpStatus.OK
@@ -107,13 +125,31 @@ class LoggersEndpointSpec extends Specification {
         embeddedServer.close()
     }
 
-    void "test that can configure level of a known logger via the loggers endpoint"() {
+    void "test that an attempt to configure a non-existent log returns NOT_FOUND"() {
         given:
+        def url = '/loggers/.xyz.abc.'     // log '.xyz.abc.' does not exist
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
         RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.URL)
 
         when:
-        def response = rxClient.exchange(HttpRequest.POST("/loggers/zzz", [configuredLevel: 'OFF']), String).blockingFirst()
+        def response = rxClient.exchange(HttpRequest.POST(url, [configuredLevel: 'OFF']), String).blockingFirst()
+
+        then:
+        response.status == HttpStatus.NOT_FOUND
+
+        cleanup:
+        rxClient.close()
+        embeddedServer.close()
+    }
+
+    void "test that can configure level of an existing log via the loggers endpoint"() {
+        given:
+        def url = '/loggers/errors'     // log 'errors' exists in logback-test.xml
+        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
+        RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.URL)
+
+        when:
+        def response = rxClient.exchange(HttpRequest.POST(url, [configuredLevel: 'OFF']), String).blockingFirst()
 
         then:
         response.status == HttpStatus.NO_CONTENT
