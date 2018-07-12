@@ -5,6 +5,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.util.StatusPrinter;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.management.endpoint.loggers.LoggerConfiguration;
 import io.micronaut.management.endpoint.loggers.LoggersAggregator;
 import io.micronaut.management.endpoint.loggers.LoggersEndpoint;
 import io.reactivex.Single;
@@ -28,8 +29,6 @@ public class RxLoggersAggregator implements LoggersAggregator {
 
     // TODO A lot of this is specific to Logback... to be abstracted/moved elsewhere.
 
-    public static final String NOT_SPECIFIED = "NOT_SPECIFIED";
-
     @Override
     public Publisher<Map<String, Object>> aggregate() {
 
@@ -42,16 +41,11 @@ public class RxLoggersAggregator implements LoggersAggregator {
         // TODO Reimplement async.
         loggerContext.getLoggerList()
                 .forEach((log) -> {
+                    LoggerConfiguration config = new LoggerConfiguration(log);
+
                     Map<String, String> levels = new HashMap<>();
-
-                    Level configuredLevel = log.getLevel();
-                    Level effectiveLevel = log.getEffectiveLevel();
-
-                    levels.put("configuredLevel",
-                            configuredLevel != null ? configuredLevel.toString() : NOT_SPECIFIED);
-                    levels.put("effectiveLevel",
-                            effectiveLevel != null ? effectiveLevel.toString() : NOT_SPECIFIED);
-
+                    levels.put("configuredLevel", config.getConfiguredLevel().name());
+                    levels.put("effectiveLevel", config.getEffectiveLevel().name());
                     loggers.put(log.getName(), levels);
                 });
 
