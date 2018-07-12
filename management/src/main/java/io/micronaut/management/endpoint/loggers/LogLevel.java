@@ -23,6 +23,7 @@ package io.micronaut.management.endpoint.loggers;
  * NOT_SPECIFIED pseudo-level instead of null.
  */
 public enum LogLevel {
+    ALL,
     TRACE,
     DEBUG,
     INFO,
