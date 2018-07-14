@@ -18,8 +18,10 @@ package io.micronaut.management.endpoint.loggers
 import io.micronaut.context.ApplicationContext
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
+import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.RxHttpClient
 import io.micronaut.runtime.server.EmbeddedServer
+import spock.lang.Shared
 import spock.lang.Specification
 
 /**
@@ -39,7 +41,7 @@ class LoggersEndpointSpec extends Specification {
     static final NOT_SPECIFIED = 'NOT_SPECIFIED'
 
     // Loggers configured in logback-test.xml
-    private configuredLoggers = [
+    static final configuredLoggers = [
             ROOT: [configuredLevel: INFO, effectiveLevel: INFO],
             errors: [configuredLevel: ERROR, effectiveLevel: ERROR],
             'no-appenders': [configuredLevel: WARN, effectiveLevel: WARN],
@@ -48,25 +50,39 @@ class LoggersEndpointSpec extends Specification {
     ]
 
     // Some known loggers internal to micronaut
-    private expectedBuiltinLoggers = ['io.micronaut', 'io.netty']
+    static final expectedBuiltinLoggers = ['io.micronaut', 'io.netty']
 
-    private expectedLogLevels = [ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL,
-                                 OFF, NOT_SPECIFIED]
+    static final expectedLogLevels = [
+            ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF, NOT_SPECIFIED]
+
+
+    @Shared EmbeddedServer server
+    @Shared RxHttpClient client
+
+    void setup() {
+        server = ApplicationContext.run(EmbeddedServer)
+        client = server.applicationContext.createBean(RxHttpClient, server.URL)
+    }
+
+    void cleanup() {
+        client.close()
+        server.close()
+    }
 
     void "test that the configured loggers are returned from the endpoint"() {
-        given:
-        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
-        RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.URL)
+        when:
+        def response = client.exchange(HttpRequest.GET("/loggers"), Map).blockingFirst()
+
+        then:
+        response.status == HttpStatus.OK
 
         when:
-        def response = rxClient.exchange(HttpRequest.GET("/loggers"), Map).blockingFirst()
         def result = response.body()
 
-        then: 'the request was successful'
-        response.status == HttpStatus.OK
+        then:
         result.containsKey 'loggers'
 
-        and: 'we have all loggers and expected levels from configuration'
+        and: 'we have all loggers expected from configuration'
         configuredLoggers.every { log, levels ->
             result.loggers.containsKey log
             result.loggers[log] == levels
@@ -76,66 +92,47 @@ class LoggersEndpointSpec extends Specification {
         expectedBuiltinLoggers.every {
             result.loggers.containsKey it
         }
-
-        cleanup:
-        rxClient.close()
-        embeddedServer.close()
     }
 
     void "test that the expected log levels are returned from the endpoint"() {
-        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
-        RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.URL)
+        when:
+        def response = client.exchange(HttpRequest.GET("/loggers"), Map)
+                .blockingFirst()
+
+        then:
+        response.status == HttpStatus.OK
 
         when:
-        def response = rxClient.exchange(HttpRequest.GET("/loggers"), Map).blockingFirst()
         def result = response.body()
 
-        then: 'the request was successful'
-        response.status == HttpStatus.OK
-        result.containsKey 'levels'
-
-        and: 'we have all the expected log levels'
+        then:
         result.levels == expectedLogLevels
     }
 
     void "test that log levels can be retrieved via the loggers endpoint"() {
         given:
         def url = '/loggers/errors'
-        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
-        RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.URL)
 
         when:
-        def response = rxClient.exchange(HttpRequest.GET(url), Map).blockingFirst()
+        def response = client.exchange(HttpRequest.GET(url), Map)
+                .blockingFirst()
 
         then:
         response.status == HttpStatus.OK
-
-        when:
-        def result = response.body()
-
-        then:
         response.body() == [configuredLevel: ERROR, effectiveLevel: ERROR]
-
-        cleanup:
-        rxClient.close()
-        embeddedServer.close()
     }
 
     void "test that log levels can be configured via the loggers endpoint"() {
         given:
         def url = '/loggers/errors'
-        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
-        RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.URL)
+        def data = [configuredLevel: OFF]
 
         when:
-        def response = rxClient.exchange(HttpRequest.POST(url, [configuredLevel: 'OFF']), String).blockingFirst()
+        def response = client.exchange(HttpRequest.POST(url, data))
+                .blockingFirst()
 
         then:
         response.status == HttpStatus.NO_CONTENT
-
-        cleanup:
-        rxClient.close()
-        embeddedServer.close()
     }
 
 }
