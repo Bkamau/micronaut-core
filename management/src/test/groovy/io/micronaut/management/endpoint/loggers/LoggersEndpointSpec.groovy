@@ -28,36 +28,32 @@ import spock.lang.Specification
  */
 class LoggersEndpointSpec extends Specification {
 
+    static final ALL = 'ALL'
     static final ERROR = 'ERROR'
     static final WARN = 'WARN'
     static final INFO = 'INFO'
     static final DEBUG = 'DEBUG'
     static final TRACE = 'TRACE'
+    static final FATAL = 'FATAL'
+    static final OFF = 'OFF'
     static final NOT_SPECIFIED = 'NOT_SPECIFIED'
 
-    void "test that the loggers endpoint is not available when disabled via config"() {
-        given:
-        ApplicationContext context = ApplicationContext.run(['endpoints.loggers.enabled': false])
+    // Loggers configured in logback-test.xml
+    private configuredLoggers = [
+            ROOT: [configuredLevel: INFO, effectiveLevel: INFO],
+            errors: [configuredLevel: ERROR, effectiveLevel: ERROR],
+            'no-appenders': [configuredLevel: WARN, effectiveLevel: WARN],
+            'no-level': [configuredLevel: NOT_SPECIFIED, effectiveLevel: INFO],
+            'no-config': [configuredLevel: NOT_SPECIFIED, effectiveLevel: INFO],
+    ]
 
-        expect:
-        !context.containsBean(LoggersEndpoint)
+    // Some known loggers internal to micronaut
+    private expectedBuiltinLoggers = ['io.micronaut', 'io.netty']
 
-        cleanup:
-        context.close()
-    }
+    private expectedLogLevels = [ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL,
+                                 OFF, NOT_SPECIFIED]
 
-    void "test that the loggers endpoint is available when enabled via config"() {
-        given:
-        ApplicationContext context = ApplicationContext.run(['endpoints.loggers.enabled': true])
-
-        expect:
-        context.containsBean(LoggersEndpoint)
-
-        cleanup:
-        context.close()
-    }
-
-    void "test that the loggers configured in logback-test.xml are returned from the endpoint"() {
+    void "test that the configured loggers are returned from the endpoint"() {
         given:
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
         RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.URL)
@@ -70,47 +66,41 @@ class LoggersEndpointSpec extends Specification {
         response.status == HttpStatus.OK
         result.containsKey 'loggers'
 
-        and: 'we have some expected builtin loggers'
-        ['io.micronaut', 'io.netty'].every {
-            result.loggers.containsKey it
-        }
-
-        and: 'we have all loggers and expected levels from logback-test.xml'
-        [ROOT: [configuredLevel: INFO, effectiveLevel: INFO],
-         errors: [configuredLevel: ERROR, effectiveLevel: ERROR],
-         'no-appenders': [configuredLevel: WARN, effectiveLevel: WARN],
-         'no-level': [configuredLevel: NOT_SPECIFIED, effectiveLevel: INFO],
-         'no-config': [configuredLevel: NOT_SPECIFIED, effectiveLevel: INFO],
-        ].every { log, levels ->
+        and: 'we have all loggers and expected levels from configuration'
+        configuredLoggers.every { log, levels ->
             result.loggers.containsKey log
             result.loggers[log] == levels
         }
 
+        and: 'we have some expected builtin loggers'
+        expectedBuiltinLoggers.every {
+            result.loggers.containsKey it
+        }
+
         cleanup:
         rxClient.close()
         embeddedServer.close()
     }
 
-    void "test that a request for log levels of a non-existent log returns NOT_FOUND"() {
-        given:
-        def url = '/loggers/.xyz.abc.'     // log '.xyz.abc.' does not exist
+    void "test that the expected log levels are returned from the endpoint"() {
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
         RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.URL)
 
         when:
-        def response = rxClient.exchange(HttpRequest.GET(url), Integer).blockingFirst()
+        def response = rxClient.exchange(HttpRequest.GET("/loggers"), Map).blockingFirst()
+        def result = response.body()
 
-        then:
-        response.status == HttpStatus.NOT_FOUND
+        then: 'the request was successful'
+        response.status == HttpStatus.OK
+        result.containsKey 'levels'
 
-        cleanup:
-        rxClient.close()
-        embeddedServer.close()
+        and: 'we have all the expected log levels'
+        result.levels == expectedLogLevels
     }
 
-    void "test that log levels of an existing log can be retrieved via the loggers endpoint"() {
+    void "test that log levels can be retrieved via the loggers endpoint"() {
         given:
-        def url = '/loggers/errors'     // log 'errors' exists in logback-test.xml
+        def url = '/loggers/errors'
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
         RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.URL)
 
@@ -125,26 +115,9 @@ class LoggersEndpointSpec extends Specification {
         embeddedServer.close()
     }
 
-    void "test that an attempt to configure a non-existent log returns NOT_FOUND"() {
+    void "test that log levels can be configured via the loggers endpoint"() {
         given:
-        def url = '/loggers/.xyz.abc.'     // log '.xyz.abc.' does not exist
-        EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
-        RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.URL)
-
-        when:
-        def response = rxClient.exchange(HttpRequest.POST(url, [configuredLevel: 'OFF']), String).blockingFirst()
-
-        then:
-        response.status == HttpStatus.NOT_FOUND
-
-        cleanup:
-        rxClient.close()
-        embeddedServer.close()
-    }
-
-    void "test that can configure level of an existing log via the loggers endpoint"() {
-        given:
-        def url = '/loggers/errors'     // log 'errors' exists in logback-test.xml
+        def url = '/loggers/errors'
         EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer)
         RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.URL)
 
