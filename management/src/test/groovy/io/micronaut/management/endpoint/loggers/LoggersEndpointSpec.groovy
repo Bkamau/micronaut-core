@@ -37,7 +37,6 @@ class LoggersEndpointSpec extends Specification {
     static final INFO = 'INFO'
     static final DEBUG = 'DEBUG'
     static final TRACE = 'TRACE'
-    static final FATAL = 'FATAL'
     static final OFF = 'OFF'
     static final NOT_SPECIFIED = 'NOT_SPECIFIED'
 
@@ -54,7 +53,7 @@ class LoggersEndpointSpec extends Specification {
     static final expectedBuiltinLoggers = ['io.micronaut', 'io.netty']
 
     static final expectedLogLevels = [
-            ALL, TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF, NOT_SPECIFIED]
+            ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF, NOT_SPECIFIED]
 
 
     @Shared EmbeddedServer server
