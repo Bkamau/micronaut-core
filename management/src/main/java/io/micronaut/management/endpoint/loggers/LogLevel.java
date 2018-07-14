@@ -29,7 +29,6 @@ public enum LogLevel {
     INFO,
     WARN,
     ERROR,
-    FATAL,
     OFF,
 
     NOT_SPECIFIED,
