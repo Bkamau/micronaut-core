@@ -15,9 +15,6 @@
  */
 package io.micronaut.management.endpoint.loggers;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-
 /**
  * <p>Represents the configuration of a {@link LoggingSystem} logger.</p>
  *
@@ -43,13 +40,6 @@ public class LoggerConfiguration {
         this.effectiveLevel = effectiveLevel;
     }
 
-    // TODO Temporary?
-    public LoggerConfiguration(Logger logger) {
-        this.name = logger.getName();
-        this.configuredLevel = toLogLevel(logger.getLevel());
-        this.effectiveLevel = toLogLevel(logger.getEffectiveLevel());
-    }
-
     public String getName() {
         return name;
     }
@@ -60,30 +50,6 @@ public class LoggerConfiguration {
 
     public LogLevel getEffectiveLevel() {
         return effectiveLevel;
-    }
-
-    private static LogLevel toLogLevel(Level level) {
-        if (level == null) {
-            return LogLevel.NOT_SPECIFIED;
-        }
-        switch (level.toInt()) {
-            case Level.ALL_INT:
-                return LogLevel.ALL;
-            case Level.TRACE_INT:
-                return LogLevel.TRACE;
-            case Level.DEBUG_INT:
-                return LogLevel.DEBUG;
-            case Level.INFO_INT:
-                return LogLevel.INFO;
-            case Level.WARN_INT:
-                return LogLevel.WARN;
-            case Level.ERROR_INT:
-                return LogLevel.ERROR;
-            case Level.OFF_INT:
-                return LogLevel.OFF;
-            default:
-                throw new IllegalStateException("Unknown log level " + level.toString() + ", " + level.toInt());
-        }
     }
 
 }
