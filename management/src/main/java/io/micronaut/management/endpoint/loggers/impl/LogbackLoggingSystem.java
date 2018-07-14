@@ -70,10 +70,11 @@ public class LogbackLoggingSystem implements LoggingSystem {
      */
     // TODO Implement.
     @Override
-    public void setLogLevel(String name, LogLevel level) {
+    public void setLogLevel(String name, LogLevel logLevel) {
         LoggerContext context = getLoggerContext();
-        throw new IllegalArgumentException("Logger " + name + " not found; " +
-                "(not yet implemented)");
+        Logger logger = context.getLogger(name);
+
+        logger.setLevel(toLevel(logLevel));
     }
 
     private static LoggerContext getLoggerContext() {
@@ -92,23 +93,17 @@ public class LogbackLoggingSystem implements LoggingSystem {
         if (level == null) {
             return LogLevel.NOT_SPECIFIED;
         }
-        switch (level.toInt()) {
-            case Level.ALL_INT:
-                return LogLevel.ALL;
-            case Level.TRACE_INT:
-                return LogLevel.TRACE;
-            case Level.DEBUG_INT:
-                return LogLevel.DEBUG;
-            case Level.INFO_INT:
-                return LogLevel.INFO;
-            case Level.WARN_INT:
-                return LogLevel.WARN;
-            case Level.ERROR_INT:
-                return LogLevel.ERROR;
-            case Level.OFF_INT:
-                return LogLevel.OFF;
-            default:
-                throw new IllegalStateException("Unknown log level " + level.toString() + ", " + level.toInt());
+        else {
+            return LogLevel.valueOf(level.toString());
+        }
+    }
+
+    private static Level toLevel(LogLevel logLevel) {
+        if (logLevel == LogLevel.NOT_SPECIFIED) {
+            return null;
+        }
+        else {
+            return Level.valueOf(logLevel.name());
         }
     }
 
