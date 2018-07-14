@@ -24,6 +24,8 @@ import io.micronaut.management.endpoint.Read;
 import io.micronaut.management.endpoint.Write;
 import io.reactivex.Single;
 
+import javax.annotation.Nullable;
+
 /**
  * <p>Exposes an {@link Endpoint} to manage loggers.</p>
  *
@@ -96,7 +98,7 @@ public class LoggersEndpoint {
      * @return status level 204: successful, no content
      */
     @Write
-    public HttpResponse configureLogLevel(@QueryValue String name, String configuredLevel) {
+    public HttpResponse configureLogLevel(@QueryValue String name, @Nullable String configuredLevel) {
         loggersAggregator.setLogLevel(name, configuredLevel);
         return HttpResponse.noContent();
     }
