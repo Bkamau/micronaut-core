@@ -16,13 +16,14 @@
 package io.micronaut.management.endpoint.loggers
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.http.HttpRequest
 import io.micronaut.http.HttpStatus
-import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.RxHttpClient
 import io.micronaut.runtime.server.EmbeddedServer
 import spock.lang.Shared
 import spock.lang.Specification
+
+import static io.micronaut.http.HttpRequest.GET
+import static io.micronaut.http.HttpRequest.POST
 
 /**
  * @author Matthew Moss
@@ -71,7 +72,7 @@ class LoggersEndpointSpec extends Specification {
 
     void "test that the configured loggers are returned from the endpoint"() {
         when:
-        def response = client.exchange(HttpRequest.GET("/loggers"), Map).blockingFirst()
+        def response = client.exchange(GET("/loggers"), Map).blockingFirst()
 
         then:
         response.status == HttpStatus.OK
@@ -96,8 +97,7 @@ class LoggersEndpointSpec extends Specification {
 
     void "test that the expected log levels are returned from the endpoint"() {
         when:
-        def response = client.exchange(HttpRequest.GET("/loggers"), Map)
-                .blockingFirst()
+        def response = client.exchange(GET("/loggers"), Map).blockingFirst()
 
         then:
         response.status == HttpStatus.OK
@@ -114,8 +114,7 @@ class LoggersEndpointSpec extends Specification {
         def url = '/loggers/errors'
 
         when:
-        def response = client.exchange(HttpRequest.GET(url), Map)
-                .blockingFirst()
+        def response = client.exchange(GET(url), Map).blockingFirst()
 
         then:
         response.status == HttpStatus.OK
@@ -128,8 +127,7 @@ class LoggersEndpointSpec extends Specification {
         def data = [configuredLevel: OFF]
 
         when:
-        def response = client.exchange(HttpRequest.POST(url, data))
-                .blockingFirst()
+        def response = client.exchange(POST(url, data)).blockingFirst()
 
         then:
         response.status == HttpStatus.NO_CONTENT
