@@ -17,7 +17,6 @@
 package io.micronaut.management.endpoint.loggers;
 
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.management.endpoint.Endpoint;
 import io.micronaut.management.endpoint.EndpointConfiguration;
@@ -31,7 +30,9 @@ import io.reactivex.Single;
  * @author Matthew Moss
  * @since 1.0
  */
-@Endpoint(id = LoggersEndpoint.NAME, defaultSensitive = LoggersEndpoint.DEFAULT_SENSITIVE)
+@Endpoint(id = LoggersEndpoint.NAME,
+        defaultEnabled = LoggersEndpoint.DEFAULT_ENABLED,
+        defaultSensitive = LoggersEndpoint.DEFAULT_SENSITIVE)
 public class LoggersEndpoint {
 
     /**
@@ -43,6 +44,11 @@ public class LoggersEndpoint {
      * Endpoint configuration prefix.
      */
     public static final String PREFIX = EndpointConfiguration.PREFIX + "." + NAME;
+
+    /**
+     * Endpoint default enabled.
+     */
+    public static final boolean DEFAULT_ENABLED = true;
 
     /**
      * Endpoint default sensitivity.
@@ -58,21 +64,41 @@ public class LoggersEndpoint {
         this.loggersAggregator = loggersAggregator;
     }
 
-    // TODO Complete: @Read public Map<String, Object> loggers()
+    /**
+     * Returns the configured loggers and their configured and effective levels.
+     * Also returns the list of available levels.
+     *
+     * @return map of available levels and configured loggers with their levels
+     */
     @Read
     public Single loggers() {
-        return Single.fromPublisher(loggersAggregator.aggregate());
+        return Single.fromPublisher(loggersAggregator.loggers());
     }
 
-    // TODO Implement: @Read public LoggerLevels loggerLevels(@Selector String name)
+    /**
+     * Returns the configured log levels for the named logger. If the named
+     * logger is not found, one will be created with default log levels.
+     *
+     * @param name the logger to find
+     * @return map of configured and effective log levels for the named logger
+     */
     @Read
-    public HttpResponse loggerLevels(@QueryValue String name) {
-        return HttpResponse.status(HttpStatus.NOT_IMPLEMENTED);  // TODO Implement.
+    public Single loggerLevels(@QueryValue String name) {
+            return loggersAggregator.getLogger(name);
     }
 
-    // TODO Implement: @Write public void configureLogLevel(@Selector String name, LogLevel configuredLevel)
+    /**
+     * Sets the log level for the named logger. If the named logger is not found,
+     * one will be created and have its log level set to the provided value.
+     *
+     * @param name the logger to find and configure
+     * @param configuredLevel the log level to set on the named logger
+     * @return status level 204: successful, no content
+     */
     @Write
     public HttpResponse configureLogLevel(@QueryValue String name, String configuredLevel) {
-        return HttpResponse.status(HttpStatus.NOT_IMPLEMENTED);  // TODO Implement.
+        loggersAggregator.setLogLevel(name, configuredLevel);
+        return HttpResponse.noContent();
     }
+
 }
