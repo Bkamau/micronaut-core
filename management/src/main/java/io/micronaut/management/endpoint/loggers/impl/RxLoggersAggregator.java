@@ -68,7 +68,7 @@ public class RxLoggersAggregator implements LoggersAggregator {
 
     @Override
     public void setLogLevel(String name, String level) {
-        // TODO
+        loggingSystem.setLogLevel(name, toLogLevel(level));
     }
 
     private Map<String, String> buildLogInfo(LoggerConfiguration config) {
@@ -78,4 +78,16 @@ public class RxLoggersAggregator implements LoggersAggregator {
         return info;
     }
 
+    private static LogLevel toLogLevel(String level) {
+        if (level == null) {
+            return LogLevel.NOT_SPECIFIED;
+        }
+
+        return Arrays.stream(LogLevel.values())
+                .filter(l -> l.name().equals(level))
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Invalid log level: " + level)
+                );
+    }
 }
