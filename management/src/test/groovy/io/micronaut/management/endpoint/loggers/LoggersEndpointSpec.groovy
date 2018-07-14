@@ -105,10 +105,16 @@ class LoggersEndpointSpec extends Specification {
         RxHttpClient rxClient = embeddedServer.applicationContext.createBean(RxHttpClient, embeddedServer.URL)
 
         when:
-        def response = rxClient.exchange(HttpRequest.GET(url), Integer).blockingFirst()
+        def response = rxClient.exchange(HttpRequest.GET(url), Map).blockingFirst()
 
         then:
         response.status == HttpStatus.OK
+
+        when:
+        def result = response.body()
+
+        then:
+        response.body() == [configuredLevel: ERROR, effectiveLevel: ERROR]
 
         cleanup:
         rxClient.close()
