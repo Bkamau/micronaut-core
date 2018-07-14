@@ -123,14 +123,53 @@ class LoggersEndpointSpec extends Specification {
 
     void "test that log levels can be configured via the loggers endpoint"() {
         given:
-        def url = '/loggers/errors'
-        def data = [configuredLevel: OFF]
+        def url = '/loggers/no-config'
 
-        when:
-        def response = client.exchange(POST(url, data)).blockingFirst()
+        when: 'we request info on the logger'
+        def response = client.exchange(GET(url), Map).blockingFirst()
 
-        then:
+        then: 'we get back the expected, original log levels'
+        response.status == HttpStatus.OK
+        response.body() == [configuredLevel: NOT_SPECIFIED, effectiveLevel: INFO]
+
+        when: 'we request the log level on the logger is changed'
+        response = client.exchange(POST(url, [configuredLevel: WARN])).blockingFirst()
+
+        then: 'we get back success without content'
         response.status == HttpStatus.NO_CONTENT
+
+        when: 'we again request info on the logger'
+        response = client.exchange(GET(url), Map).blockingFirst()
+
+        then: 'we get back the newly configured levels'
+        response.status == HttpStatus.OK
+        response.body() == [configuredLevel: WARN, effectiveLevel: WARN]
     }
+
+    void "test that setting logger log level to null works as NOT_SPECIFIED"() {
+        given:
+        def url = '/loggers/no-appenders'
+
+        when: 'we request info on the logger'
+        def response = client.exchange(GET(url), Map).blockingFirst()
+
+        then: 'we get back the expected, original log levels'
+        response.status == HttpStatus.OK
+        response.body() == [configuredLevel: WARN, effectiveLevel: WARN]
+
+        when: 'we request the log level on the logger is changed'
+        response = client.exchange(POST(url, [configuredLevel: null])).blockingFirst()
+
+        then: 'we get back success without content'
+        response.status == HttpStatus.NO_CONTENT
+
+        when: 'we again request info on the logger'
+        response = client.exchange(GET(url), Map).blockingFirst()
+
+        then: 'we get back the newly configured levels'
+        response.status == HttpStatus.OK
+        response.body() == [configuredLevel: NOT_SPECIFIED, effectiveLevel: INFO]
+    }
+
 
 }
