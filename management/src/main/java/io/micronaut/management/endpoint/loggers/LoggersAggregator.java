@@ -16,20 +16,26 @@
 
 package io.micronaut.management.endpoint.loggers;
 
+import io.reactivex.Single;
 import org.reactivestreams.Publisher;
+
+import javax.validation.constraints.NotBlank;
 
 /**
  * <p>Aggregates all loggers into a single response.</p>
  *
- * @param <T> The type
  * @author Matthew Moss
  * @since 1.0
  */
 public interface LoggersAggregator<T> {
 
     /**
-     * Aggregate an array of ... and return a publisher.
+     * Methods to collect Logger information.
      *
      */
-    Publisher<T> aggregate();
+    Publisher<T> loggers();
+
+    Single<T> getLogger(@NotBlank String name);
+
+    void setLogLevel(@NotBlank String name, String level);
 }

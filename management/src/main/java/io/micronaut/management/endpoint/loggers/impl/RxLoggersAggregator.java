@@ -1,18 +1,24 @@
+/*
+ * Copyright 2017-2018 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.management.endpoint.loggers.impl;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
-import ch.qos.logback.core.util.StatusPrinter;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.management.endpoint.loggers.LoggerConfiguration;
-import io.micronaut.management.endpoint.loggers.LoggersAggregator;
-import io.micronaut.management.endpoint.loggers.LoggersEndpoint;
+import io.micronaut.management.endpoint.loggers.*;
 import io.reactivex.Single;
 import org.reactivestreams.Publisher;
-
-import org.slf4j.LoggerFactory;
-import ch.qos.logback.classic.LoggerContext;
 
 import javax.inject.Singleton;
 import java.util.*;
@@ -27,37 +33,49 @@ import java.util.*;
 @Requires(beans = LoggersEndpoint.class)
 public class RxLoggersAggregator implements LoggersAggregator {
 
-    // TODO A lot of this is specific to Logback... to be abstracted/moved elsewhere.
+    private LoggingSystem loggingSystem;
 
-    @Override
-    public Publisher<Map<String, Object>> aggregate() {
-
-        // Assumes SLF4J is bound to logback.
-        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        StatusPrinter.print(loggerContext);
-
-        Map<String, Object> loggers = new HashMap<>();
-
-        // TODO Reimplement async.
-        loggerContext.getLoggerList()
-                .forEach((log) -> {
-                    LoggerConfiguration config = new LoggerConfiguration(log);
-
-                    Map<String, String> levels = new HashMap<>();
-                    levels.put("configuredLevel", config.getConfiguredLevel().name());
-                    levels.put("effectiveLevel", config.getEffectiveLevel().name());
-                    loggers.put(log.getName(), levels);
-                });
-
-        Map<String, Object> loggersInfo = new HashMap<>();
-        loggersInfo.put("loggers", loggers);
-
-        return Single.just(loggersInfo).toFlowable();
+    RxLoggersAggregator(LoggingSystem loggingSystem) {
+        this.loggingSystem = loggingSystem;
     }
 
-    private boolean hasAppenders(ch.qos.logback.classic.Logger log) {
-        Iterator<Appender<ILoggingEvent>> it = log.iteratorForAppenders();
-        return it.hasNext();
+    @Override
+    public Publisher<Map<String, Object>> loggers() {
+        Map<String, Object> result = new HashMap<>();
+
+        LogLevel[] logLevels = LogLevel.values();
+        List<String> levels = new ArrayList<>(logLevels.length);
+        for (LogLevel level : logLevels) {
+            levels.add(level.name());
+        }
+        result.put("levels", levels);
+
+        Collection<LoggerConfiguration> configs = loggingSystem.getLoggers();
+        Map<String, Object> loggers = new HashMap<>(configs.size());
+        for (LoggerConfiguration config : configs) {
+            loggers.put(config.getName(), buildLogInfo(config));
+        }
+        result.put("loggers", loggers);
+
+        return Single.just(result).toFlowable();
+    }
+
+    @Override
+    public Single getLogger(String name) {
+        LoggerConfiguration config = loggingSystem.getLogger(name);
+        return Single.just(buildLogInfo(config));
+    }
+
+    @Override
+    public void setLogLevel(String name, String level) {
+        // TODO
+    }
+
+    private Map<String, String> buildLogInfo(LoggerConfiguration config) {
+        Map<String, String> info = new HashMap<>();
+        info.put("configuredLevel", config.getConfiguredLevel().name());
+        info.put("effectiveLevel", config.getEffectiveLevel().name());
+        return info;
     }
 
 }
