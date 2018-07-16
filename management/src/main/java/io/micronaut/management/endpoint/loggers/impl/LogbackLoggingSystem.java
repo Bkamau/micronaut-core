@@ -15,9 +15,9 @@
  */
 package io.micronaut.management.endpoint.loggers.impl;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
+//import ch.qos.logback.classic.Level;
+//import ch.qos.logback.classic.Logger;
+//import ch.qos.logback.classic.LoggerContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.management.endpoint.loggers.LogLevel;
 import io.micronaut.management.endpoint.loggers.LoggerConfiguration;
@@ -26,6 +26,7 @@ import io.micronaut.management.endpoint.loggers.LoggingSystem;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Singleton;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -40,12 +41,13 @@ public class LogbackLoggingSystem implements LoggingSystem {
      */
     @Override
     public Collection<LoggerConfiguration> getLoggers() {
-        LoggerContext context = getLoggerContext();
+        //LoggerContext context = getLoggerContext();
 
-        return context.getLoggerList()
-                .stream()
-                .map(LogbackLoggingSystem::buildLoggerConfiguration)
-                .collect(Collectors.toList());
+//        return context.getLoggerList()
+//                .stream()
+//                .map(LogbackLoggingSystem::buildLoggerConfiguration)
+//                .collect(Collectors.toList());
+        return new ArrayList<>();
     }
 
     /**
@@ -56,10 +58,11 @@ public class LogbackLoggingSystem implements LoggingSystem {
      */
     @Override
     public LoggerConfiguration getLogger(String name) {
-        LoggerContext context = getLoggerContext();
-        Logger logger = context.getLogger(name);
-
-        return buildLoggerConfiguration(logger);
+//        LoggerContext context = getLoggerContext();
+//        Logger logger = context.getLogger(name);
+//
+//        return buildLoggerConfiguration(logger);
+        return new LoggerConfiguration("foo", LogLevel.OFF, LogLevel.OFF);
     }
 
     /**
@@ -71,40 +74,40 @@ public class LogbackLoggingSystem implements LoggingSystem {
     // TODO Implement.
     @Override
     public void setLogLevel(String name, LogLevel logLevel) {
-        LoggerContext context = getLoggerContext();
-        Logger logger = context.getLogger(name);
-
-        logger.setLevel(toLevel(logLevel));
+//        LoggerContext context = getLoggerContext();
+//        Logger logger = context.getLogger(name);
+//
+//        logger.setLevel(toLevel(logLevel));
     }
 
-    private static LoggerContext getLoggerContext() {
-        return (LoggerContext) LoggerFactory.getILoggerFactory();
-    }
-
-    private static LoggerConfiguration buildLoggerConfiguration(Logger logger) {
-        LogLevel configuredLevel = toLogLevel(logger.getLevel());
-        LogLevel effectiveLevel = toLogLevel(logger.getEffectiveLevel());
-
-        return new LoggerConfiguration(logger.getName(), configuredLevel,
-                effectiveLevel);
-    }
-
-    private static LogLevel toLogLevel(Level level) {
-        if (level == null) {
-            return LogLevel.NOT_SPECIFIED;
-        }
-        else {
-            return LogLevel.valueOf(level.toString());
-        }
-    }
-
-    private static Level toLevel(LogLevel logLevel) {
-        if (logLevel == LogLevel.NOT_SPECIFIED) {
-            return null;
-        }
-        else {
-            return Level.valueOf(logLevel.name());
-        }
-    }
+//    private static LoggerContext getLoggerContext() {
+//        return (LoggerContext) LoggerFactory.getILoggerFactory();
+//    }
+//
+//    private static LoggerConfiguration buildLoggerConfiguration(Logger logger) {
+//        LogLevel configuredLevel = toLogLevel(logger.getLevel());
+//        LogLevel effectiveLevel = toLogLevel(logger.getEffectiveLevel());
+//
+//        return new LoggerConfiguration(logger.getName(), configuredLevel,
+//                effectiveLevel);
+//    }
+//
+//    private static LogLevel toLogLevel(Level level) {
+//        if (level == null) {
+//            return LogLevel.NOT_SPECIFIED;
+//        }
+//        else {
+//            return LogLevel.valueOf(level.toString());
+//        }
+//    }
+//
+//    private static Level toLevel(LogLevel logLevel) {
+//        if (logLevel == LogLevel.NOT_SPECIFIED) {
+//            return null;
+//        }
+//        else {
+//            return Level.valueOf(logLevel.name());
+//        }
+//    }
 
 }
